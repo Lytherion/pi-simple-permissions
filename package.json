@@ -1,0 +1,23 @@
+{
+  "name": "pi-simple-permissions",
+  "version": "1.0.0",
+  "description": "Pi Coding Agent extension for sandboxed bash execution and manual permission gates.",
+  "keywords": [
+    "pi-package",
+    "security",
+    "permissions",
+    "sandbox"
+  ],
+  "author": "lvyiqiang",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  }
+}
