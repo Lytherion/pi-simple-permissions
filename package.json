@@ -1,6 +1,6 @@
 {
   "name": "pi-simple-permissions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pi Coding Agent extension for sandboxed bash execution and manual permission gates.",
   "keywords": [
     "pi-package",

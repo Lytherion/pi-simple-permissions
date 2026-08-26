@@ -124,9 +124,11 @@ async function approve(
   ctx: ExtensionContext,
   title: string,
   detail: string,
+  signal?: AbortSignal,
 ): Promise<boolean> {
-  if (!ctx.hasUI) return false;
-  const choice = await ctx.ui.select(`${title}\n\n${detail}`, ["Allow once", "Deny"]);
+  if (!ctx.hasUI || signal?.aborted) return false;
+  const options = signal ? { signal } : undefined;
+  const choice = await ctx.ui.select(`${title}\n\n${detail}`, ["Allow once", "Deny"], options);
   return choice === "Allow once";
 }
 
@@ -205,22 +207,28 @@ export default function simplePermissions(pi: ExtensionAPI): void {
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    if (mode === "yolo") return;
+    const callMode = mode;
+    if (callMode === "yolo") return;
     if (event.toolName !== "write" && event.toolName !== "edit") return;
 
     const path = String(event.input.path ?? "");
-    const needsApproval = mode === "default" || !isAutoWritePath(path, ctx.cwd);
+    const needsApproval = callMode === "default" || !isAutoWritePath(path, ctx.cwd);
     if (!needsApproval) return;
 
     const allowed = await approve(
       ctx,
-      `${MODE_LABELS[mode]} permission request`,
+      `${MODE_LABELS[callMode]} permission request`,
       `${event.toolName}: ${path}`,
+      ctx.signal,
     );
     if (!allowed) {
       return {
         block: true,
-        reason: ctx.hasUI ? "Blocked by user" : "Permission required, but no interactive UI is available",
+        reason: ctx.signal?.aborted
+          ? "Operation aborted"
+          : ctx.hasUI
+            ? "Blocked by user"
+            : "Permission required, but no interactive UI is available",
       };
     }
   });
@@ -242,35 +250,45 @@ export default function simplePermissions(pi: ExtensionAPI): void {
     ...template,
     name: "bash",
     label: "bash (permissioned)",
+    executionMode: "sequential",
     parameters: bashParameters,
     description: `${template.description}\n\nIn Auto mode, bash can write only inside the current working directory and /tmp. Use sandbox_permissions=\"require_escalated\" only when a necessary operation must write elsewhere. Network access is unrestricted. Mutating Git commands require approval.`,
     async execute(toolCallId, params: BashParams, signal, onUpdate, ctx) {
+      const callMode = mode;
       const command = params.command.trim();
       const escalated = params.sandbox_permissions === "require_escalated";
       const gitMutation = mutatesGit(command);
-      
-      const isYolo = mode === "yolo";
-      const needsApproval = !isYolo && (mode === "default" || escalated || gitMutation);
+      const isYolo = callMode === "yolo";
+      const needsApproval = !isYolo && (callMode === "default" || escalated || gitMutation);
 
       if (needsApproval) {
         const reasons = [
-          mode === "default" ? "Default mode" : undefined,
+          callMode === "default" ? "Default mode" : undefined,
           escalated ? `filesystem escalation${params.escalation_reason ? `: ${params.escalation_reason}` : ""}` : undefined,
           gitMutation ? "mutating Git command" : undefined,
         ].filter(Boolean).join("; ");
-        const allowed = await approve(ctx, `${MODE_LABELS[mode]} bash permission request`, `${command}\n\nReason: ${reasons}`);
+        const allowed = await approve(
+          ctx,
+          `${MODE_LABELS[callMode]} bash permission request`,
+          `${command}\n\nReason: ${reasons}`,
+          signal,
+        );
         if (!allowed) {
           return {
             content: [{
               type: "text",
-              text: ctx.hasUI ? "Permission denied by user" : "Permission required, but no interactive UI is available",
+              text: signal?.aborted
+                ? "Operation aborted"
+                : ctx.hasUI
+                  ? "Permission denied by user"
+                  : "Permission required, but no interactive UI is available",
             }],
             details: undefined,
           };
         }
       }
 
-      const useSandbox = mode === "auto" && !escalated && !isYolo;
+      const useSandbox = callMode === "auto" && !escalated && !isYolo;
       const tool = useSandbox
         ? createBashTool(ctx.cwd, { operations: createSandboxOperations() })
         : createBashTool(ctx.cwd);
