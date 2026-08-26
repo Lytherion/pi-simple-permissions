@@ -20,7 +20,7 @@ A permission management extension for Pi Coding Agent, providing operation admis
 ### Installation
 
 ```bash
-pi install pi-simple-permissions
+pi install npm:pi-simple-permissions
 ```
 
 Or from source:
@@ -60,7 +60,7 @@ In `Auto` mode, if the LLM needs to perform actions outside the sandbox, it will
 ### 安装方式
 
 ```bash
-pi install pi-simple-permissions
+pi install npm:pi-simple-permissions
 ```
 
 或者从源码安装：
