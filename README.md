@@ -1,3 +1,29 @@
+> ## 已停止维护 / No longer maintained
+>
+> 本项目不再更新，后续开发已迁移至 **[pi-dev-kit](https://github.com/Lytherion/pi-dev-kit)**。
+>
+> This project is no longer maintained. Development has moved to **[pi-dev-kit](https://github.com/Lytherion/pi-dev-kit)**.
+>
+> **新 npm 包 / New npm package:** `pi-dev-kit`
+>
+> 如果旧包通过 npm 安装，请先移除旧包再安装新包：
+>
+> If you installed the old package from npm, remove it before installing the new package:
+>
+> ```bash
+> pi remove npm:pi-simple-permissions
+> pi install npm:pi-dev-kit
+> ```
+>
+> Git、本地路径或项目级安装，请通过 `pi list` 确认来源并移除对应旧声明；项目级配置使用 `--local`。
+>
+> For Git, local-path, or project-level installations, use `pi list` to identify and remove the old package declaration. Use `--local` for project-level configuration.
+>
+> **新旧扩展不要同时加载；迁移后请检查模块配置与权限档位。**
+>
+> **Do not load both the old and new extensions. After migration, review your module configuration and permission mode.**
+
+
 # Simple Permissions for Pi
 
 [English](#english) | [中文](#中文)
